@@ -1,0 +1,42 @@
+name: Release
+
+# Publishes to npm via Trusted Publishing (OIDC) on every GitHub Release.
+# No token is stored anywhere — npm mints a short-lived credential for this
+# exact repository and workflow. Same arrangement as wardenpoint-python on PyPI.
+#
+# One-time setup on npmjs.com, after the first manual publish:
+#   package @wardenpoint/mcp-server → Settings → Publishing access
+#   → GitHub Actions → repository WardenPoint/wardenpoint-mcp,
+#     workflow "release.yml", environment "npm".
+#
+# The version published is whatever package.json says. The release tag is not
+# read: two sources for one number is how a tag ends up disagreeing with the
+# thing it tagged.
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      id-token: write   # required for OIDC
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          cache: npm
+      # Trusted publishing needs npm 11.5.1 or newer; the version bundled with
+      # Node 22 is older than that.
+      - run: npm install -g npm@latest
+      - run: npm ci
+      # The package is published only if it survives being packed, installed
+      # elsewhere and started. A release that cannot run is worse than no
+      # release: npm keeps the version forever.
+      - run: npm test
+      - run: npm publish --access public

@@ -1,0 +1,50 @@
+{
+  "name": "@wardenpoint/mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server for WardenPoint: let an agent configure recipients, groups, escalation policies, on-call schedules and alert routing. Built entirely from the installation's own OpenAPI description.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "wardenpoint",
+    "on-call",
+    "alerting",
+    "incident-response",
+    "escalation",
+    "openapi"
+  ],
+  "homepage": "https://wardenpoint.com/mcp",
+  "bugs": {
+    "url": "https://github.com/WardenPoint/wardenpoint-mcp/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WardenPoint/wardenpoint-mcp.git"
+  },
+  "license": "MIT",
+  "author": "WardenPoint",
+  "type": "module",
+  "bin": {
+    "wardenpoint-mcp-server": "bin/wardenpoint-mcp-server.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node bin/wardenpoint-mcp-server.js",
+    "tools": "node bin/wardenpoint-mcp-server.js --list-tools",
+    "lint-spec": "node bin/wardenpoint-mcp-server.js --spec-report",
+    "test": "node test/package-runs-standalone.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0"
+  }
+}
