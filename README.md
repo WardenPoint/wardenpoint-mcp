@@ -17,7 +17,7 @@ OpenAPI description**.
       "args": ["-y", "@wardenpoint/mcp-server"],
       "env": {
         "WARDENPOINT_BASE_URL": "https://wardenpoint.com",
-        "WARDENPOINT_API_TOKEN": "wp_live_..."
+        "WARDENPOINT_API_TOKEN": "acb_xxxxxxxx.xxxxxxxx"
       }
     }
   }
