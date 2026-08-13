@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.1 — 2026-08-14
+
+**0.1.0 could not start against a production WardenPoint. Upgrade.**
+
+It read the description from `GET {WARDENPOINT_BASE_URL}/docs`, a path served
+by `l5-swagger` — which is a *development* dependency of the application. A
+production image is built without it, so that address does not exist there.
+The failure was invisible in development, where the package is installed.
+
+- The description is now read from `/api/openapi.json`, served by WardenPoint's
+  own code in every environment. `/docs` is still tried afterwards so an older
+  installation keeps working, and a failure names every address it tried.
+- The packaging test now asserts that both addresses are attempted. Nothing in
+  0.1.0 would have caught the original mistake.
+
 ## 0.1.0 — 2026-08-14
 
 First public release.

@@ -76,8 +76,15 @@ try {
         );
     }
 
-    if (!/Cannot reach http:\/\/127\.0\.0\.1:9\/docs/.test(output)) {
-        fail('Expected a "cannot reach …/docs" failure, got:\n' + output);
+    // Both published paths must be attempted and named. Version 0.1.0 knew
+    // only `/docs`, which l5-swagger serves — and l5-swagger is a dev
+    // dependency of the application, so that path does not exist in
+    // production. The package was unusable against a real installation and
+    // nothing here would have noticed.
+    for (const endpoint of ['/api/openapi.json', '/docs']) {
+        if (!output.includes(`http://127.0.0.1:9${endpoint}`)) {
+            fail(`Expected the failure to name ${endpoint}, got:\n` + output);
+        }
     }
 
     process.stdout.write('ok — packed, installed elsewhere, and failed for the right reason\n');

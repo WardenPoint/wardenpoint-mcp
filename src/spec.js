@@ -28,7 +28,19 @@ import https from 'node:https';
  * `WARDENPOINT_OPENAPI_PATH` still overrides everything, for developing against
  * a description that has not been deployed yet.
  */
-const SPEC_ENDPOINT = '/docs';
+/**
+ * Where the installation publishes its description, newest path first.
+ *
+ * `/api/openapi.json` is served by WardenPoint's own code and exists in every
+ * environment. `/docs` comes from `l5-swagger`, which lives in the
+ * application's dev dependencies — so it answers on a development stand and
+ * does NOT exist in production. Version 0.1.0 of this package knew only that
+ * path and therefore could not start against a real installation at all.
+ *
+ * Both are tried so an older installation keeps working; the first that
+ * answers wins, and the failure message names every address that was tried.
+ */
+const SPEC_ENDPOINTS = ['/api/openapi.json', '/docs'];
 
 export function loadSpecFromFile(specPath) {
     let raw;
@@ -53,8 +65,8 @@ export function loadSpecFromFile(specPath) {
  * self-signed certificate must not be reachable for calls but unreachable for
  * the description that makes those calls possible.
  */
-export function fetchSpec(config) {
-    const url = new URL(config.baseUrl + SPEC_ENDPOINT);
+export function fetchSpecFrom(config, endpoint) {
+    const url = new URL(config.baseUrl + endpoint);
     const transport = url.protocol === 'https:' ? https : http;
 
     return new Promise((resolve, reject) => {
@@ -120,10 +132,25 @@ export function fetchSpec(config) {
 /**
  * The explicit path wins; otherwise the installation describes itself.
  */
-export function resolveSpec(config) {
-    return config.specPath
-        ? Promise.resolve(loadSpecFromFile(config.specPath))
-        : fetchSpec(config);
+export async function resolveSpec(config) {
+    if (config.specPath) {
+        return loadSpecFromFile(config.specPath);
+    }
+
+    const failures = [];
+
+    for (const endpoint of SPEC_ENDPOINTS) {
+        try {
+            return await fetchSpecFrom(config, endpoint);
+        } catch (error) {
+            failures.push(`  ${config.baseUrl}${endpoint} — ${error.message}`);
+        }
+    }
+
+    throw new Error(
+        'Could not read the OpenAPI description from the installation. Tried:\n' +
+        failures.join('\n'),
+    );
 }
 
 function assertUsableSpec(spec, source) {
