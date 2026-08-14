@@ -1,0 +1,49 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.WardenPoint/wardenpoint-mcp",
+  "title": "WardenPoint",
+  "description": "Configure on-call alerting from an AI agent: recipients, groups, escalation policies, on-call schedules and alert routing. Tools are generated from the installation's own OpenAPI description, and no ability can read a secret.",
+  "websiteUrl": "https://wardenpoint.com/mcp",
+  "repository": {
+    "url": "https://github.com/WardenPoint/wardenpoint-mcp",
+    "source": "github"
+  },
+  "version": "0.1.2",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@wardenpoint/mcp-server",
+      "version": "0.1.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "WARDENPOINT_BASE_URL",
+          "description": "Origin of your WardenPoint installation, without a trailing slash and without /api/v1 — e.g. https://wardenpoint.com. The server reads the API description from it at startup, so the tools always match the version you actually run.",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "WARDENPOINT_API_TOKEN",
+          "description": "A company API key from Dashboard → Integrations → API keys. Abilities are chosen when you issue it; read-only is a good place to start. Not needed for --list-tools.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "WARDENPOINT_TIMEOUT_MS",
+          "description": "Per-request timeout in milliseconds. Defaults to 30000.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "WARDENPOINT_ALLOW_INSECURE_TLS",
+          "description": "Set to 1 to skip certificate verification. Development stands only — never against production.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}

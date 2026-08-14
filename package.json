@@ -1,6 +1,7 @@
 {
   "name": "@wardenpoint/mcp-server",
-  "version": "0.1.1",
+  "mcpName": "io.github.WardenPoint/wardenpoint-mcp",
+  "version": "0.1.2",
   "description": "MCP server for WardenPoint: let an agent configure recipients, groups, escalation policies, on-call schedules and alert routing. Built entirely from the installation's own OpenAPI description.",
   "keywords": [
     "mcp",
