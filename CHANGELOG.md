@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.3 — 2026-08-14
+
+Found by running the server against production as a customer would.
+
+- **`WARDENPOINT_TOOLS`** limits which tools are offered. The full set is ~64k
+  tokens of context, spent before the person says anything; a session that only
+  touches recipients and groups can now cost a few thousand instead. Unset
+  means all of them, as before.
+- The startup line now states that cost out loud. An invisible price is one
+  nobody trims.
+
 ## 0.1.2 — 2026-08-14
 
 Discoverability, no behaviour change.

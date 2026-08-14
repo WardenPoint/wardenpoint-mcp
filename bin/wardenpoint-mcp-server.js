@@ -6,6 +6,22 @@ import { bootstrap } from '../src/server.js';
 const args = new Set(process.argv.slice(2));
 const config = readConfig();
 
+/**
+ * What the tool list costs the model's context.
+ *
+ * Every tool definition is sent to the model before the person says anything,
+ * so this is spent whether or not the conversation ever touches WardenPoint.
+ * The full set is around 64k tokens; on a 200k window that is a third of it.
+ * Saying the number out loud is what makes WARDENPOINT_TOOLS worth reaching
+ * for — an invisible cost is one nobody trims.
+ */
+function describeWeight(tools) {
+    const bytes = JSON.stringify(tools.map((tool) => tool.definition)).length;
+    const approxTokens = Math.round(bytes / 4 / 1000);
+
+    return `~${approxTokens}k tokens of context; narrow it with WARDENPOINT_TOOLS`;
+}
+
 function groupFindings(findings) {
     const grouped = new Map();
 
@@ -34,6 +50,7 @@ try {
             process.stdout.write(`${tool.definition.name}\t${tool.method.toUpperCase()} ${tool.path}\t[${inputs}]\n`);
         }
         process.stdout.write(`\n${tools.length} tools from ${specPath}\n`);
+        process.stdout.write(`${describeWeight(tools)}\n`);
         process.exit(0);
     }
 
@@ -62,7 +79,7 @@ try {
 
     // stdio is the protocol channel; every human-readable word goes to stderr.
     process.stderr.write(
-        `wardenpoint-mcp-server: ${tools.length} tools from ${specPath}, base ${config.baseUrl}` +
+        `wardenpoint-mcp-server: ${tools.length} tools (${describeWeight(tools)}) from ${specPath}, base ${config.baseUrl}` +
         `${config.allowInsecureTls ? ', TLS verification DISABLED' : ''}` +
         `${findings.length > 0 ? `, ${findings.length} description gaps (see --spec-report)` : ''}\n`,
     );

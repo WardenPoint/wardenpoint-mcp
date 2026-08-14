@@ -63,6 +63,7 @@ Node 20 or newer. No build step, no native modules.
 | `WARDENPOINT_API_TOKEN` | to call | A company API key from **Dashboard → Integrations → API keys**. Sent as `X-API-Key`. Not needed for `--list-tools` or `--spec-report`. |
 | `WARDENPOINT_ALLOW_INSECURE_TLS` | no | `1` disables certificate verification. **Development stands only** — never against production. |
 | `WARDENPOINT_TIMEOUT_MS` | no | Per-request timeout, default `30000`. |
+| `WARDENPOINT_TOOLS` | no | Comma-separated patterns limiting which tools are offered, e.g. `recipients,groups` or `v1_schedules_*`. Unset means all of them. |
 | `WARDENPOINT_OPENAPI_PATH` | no | Read the description from a local file instead of the installation. For developing against a description that is not deployed yet. |
 
 The token is read from the environment at every start and is never written
@@ -81,6 +82,30 @@ missing:
 **No ability can read a secret.** There is no such ability in the vocabulary, so
 it cannot be granted by mistake. The API reports whether a credential is set and
 whether it verified — never its value.
+
+## What the tool list costs
+
+Every tool definition is sent to the model before the person says anything, so
+it is spent whether or not the conversation ever touches WardenPoint. The full
+set of 89 tools is roughly **64k tokens** — on a 200k context window, a third
+of it.
+
+The server prints the figure at startup so it is not an invisible cost:
+
+```
+wardenpoint-mcp-server: 89 tools (~63k tokens of context; narrow it with WARDENPOINT_TOOLS) from …
+```
+
+If a session only ever touches part of the product, say so:
+
+```json
+"env": { "WARDENPOINT_TOOLS": "recipients,groups,schedules" }
+```
+
+That drops the same run to a handful of tools and a few thousand tokens.
+Patterns match tool names (`v1_recipients_store`), and `*` works. Leave it
+unset and you get everything, which is the safe default: a tool that quietly
+disappeared looks like a missing product capability.
 
 ## Running
 

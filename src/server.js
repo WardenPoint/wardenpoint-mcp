@@ -92,9 +92,48 @@ export function createServer({ config, spec, tools }) {
  * Asynchronous because the description now comes from the installation itself
  * ({@see resolveSpec}) rather than from a file next to this code.
  */
+/**
+ * Оставить только запрошенные инструменты.
+ *
+ * Полный список — 89 инструментов и около 250 КБ, то есть примерно 64 тысячи
+ * токенов, и грузится он в каждую сессию ДО того, как человек скажет первое
+ * слово. На окне в 200 тысяч это треть контекста, потраченная на инструменты,
+ * половина которых в разговоре не понадобится.
+ *
+ * Шаблон — подстрока или glob по имени инструмента: `recipients` оставит все
+ * `v1_recipients_*`, `v1_schedules_*` — только графики. Пустой список
+ * означает «все», то есть прежнее поведение: сужать набор молча нельзя,
+ * пропавший инструмент выглядит как отсутствующая возможность продукта.
+ *
+ * @param {Array} tools
+ * @param {string[]} patterns
+ */
+function selectTools(tools, patterns) {
+    if (patterns.length === 0) {
+        return tools;
+    }
+
+    const matchers = patterns.map((pattern) => {
+        const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+        return new RegExp(escaped);
+    });
+
+    return tools.filter((tool) => matchers.some((re) => re.test(tool.definition.name)));
+}
+
 export async function bootstrap(config) {
     const { spec, specPath } = await resolveSpec(config);
-    const { tools, findings, excluded } = buildTools(spec);
+    const built = buildTools(spec);
+    const { findings, excluded } = built;
+    const tools = selectTools(built.tools, config.toolFilter || []);
+
+    if (tools.length === 0 && built.tools.length > 0) {
+        throw new Error(
+            `WARDENPOINT_TOOLS matched none of the ${built.tools.length} available tools. ` +
+            'Patterns are matched against tool names such as v1_recipients_store; ' +
+            'run --list-tools with WARDENPOINT_TOOLS unset to see them all.',
+        );
+    }
 
     return {
         spec,

@@ -12,6 +12,11 @@ export function readConfig(env = process.env) {
         allowInsecureTls,
         timeoutMs: Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 30000,
         specPath: env.WARDENPOINT_OPENAPI_PATH || null,
+        // Какие инструменты объявлять. Пусто — все.
+        toolFilter: (env.WARDENPOINT_TOOLS || '')
+            .split(',')
+            .map((part) => part.trim())
+            .filter(Boolean),
     };
 }
 
