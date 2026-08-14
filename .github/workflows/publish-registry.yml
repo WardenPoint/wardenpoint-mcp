@@ -1,0 +1,60 @@
+name: Publish to MCP Registry
+
+# Отдельно от выпуска в npm намеренно.
+#
+# Реестру нужен только `server.json` и уже опубликованный пакет — сжигать
+# версию npm ради правки описания незачем. Первая попытка так и вышла:
+# описание не влезло в лимит в 100 символов, шаг упал, а версия 0.1.2 в npm
+# уже осталась навсегда.
+#
+# Поэтому два входа: автоматически на выпуск и руками, когда нужно
+# переотправить один только манифест.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  registry:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # OIDC: namespace io.github.WardenPoint подтверждает сам репозиторий
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      # Проверяем до отправки: у реестра описание не длиннее 100 символов, а
+      # `mcpName` в package.json обязан совпадать с `name` из server.json —
+      # именно им реестр подтверждает, что npm-пакет наш.
+      - name: Validate server.json
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          sv = json.load(open('server.json'))
+          pk = json.load(open('package.json'))
+          problems = []
+          if len(sv['description']) > 100:
+              problems.append(f"description is {len(sv['description'])} chars, limit is 100")
+          if pk.get('mcpName') != sv['name']:
+              problems.append(f"package.json mcpName {pk.get('mcpName')!r} != server.json name {sv['name']!r}")
+          if pk['version'] != sv['version']:
+              problems.append(f"version {pk['version']} != server.json {sv['version']}")
+          if sv['packages'][0]['identifier'] != pk['name']:
+              problems.append('server.json package identifier does not match the npm package name')
+          if sv['packages'][0]['version'] != sv['version']:
+              problems.append('server.json package version does not match the server version')
+          if problems:
+              print('\n'.join('- ' + p for p in problems)); sys.exit(1)
+          print('server.json is consistent with package.json')
+          PY
+
+      - name: Install mcp-publisher
+        run: |
+          curl -sSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Authenticate
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish
+        run: ./mcp-publisher publish
